@@ -5,9 +5,7 @@
 //!
 //! [`CpuPool`]: futures_cpupool::CpuPool
 
-use crossbeam_channel::{bounded, Receiver};
 use lazy_static::lazy_static;
-use log::error;
 use std::env;
 
 lazy_static! {
@@ -54,30 +52,6 @@ impl Worker {
         };
 
         THREAD_POOL.scope(|scope| f(scope, chunk_size))
-    }
-}
-
-pub struct Waiter<T> {
-    receiver: Receiver<T>,
-}
-
-impl<T> Waiter<T> {
-    /// Wait for the result.
-    pub fn wait(&self) -> T {
-        if THREAD_POOL.current_thread_index().is_some() {
-            // Calling `wait()` from within the worker thread pool can lead to dead logs
-            error!("The wait call should never be done inside the worker thread pool");
-            debug_assert!(false);
-        }
-        self.receiver.recv().unwrap()
-    }
-
-    /// One off sending.
-    pub fn done(val: T) -> Self {
-        let (sender, receiver) = bounded(1);
-        sender.send(val).unwrap();
-
-        Waiter { receiver }
     }
 }
 
