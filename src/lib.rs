@@ -139,9 +139,11 @@
 #[macro_use]
 extern crate hex_literal;
 
+// TODO vmx 2021-04-14: The rustacuda dependency is only needed for the `launch!()` call in
+// rust-gpu-tools. Find a way that is isn't needed.
 #[macro_use]
 extern crate rustacuda;
-extern crate rustacuda_core;
+//extern crate rustacuda_core;
 
 pub mod bls;
 pub mod domain;
