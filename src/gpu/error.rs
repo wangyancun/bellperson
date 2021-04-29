@@ -16,8 +16,6 @@ pub enum GPUError {
     KernelUninitialized,
     #[error("GPU accelerator is disabled!")]
     GPUDisabled,
-    //#[error("Cuda {0}")]
-    //Cuda(#[from] rustacuda::error::CudaError),
     #[error("Cuda Error: {0}")]
     Cuda(#[from] cuda::GPUError),
 }
