@@ -38,32 +38,20 @@ pub fn get_cpu_utilization() -> f64 {
 }
 
 // Multiexp kernel for a single GPU
-#[cfg(feature = "opencl")]
 pub struct SingleMultiexpKernel<E>
 where
     E: Engine,
 {
+    #[cfg(feature = "opencl")]
     program: opencl::Program,
-
-    core_count: usize,
-    n: usize,
-
-    priority: bool,
-    _phantom: std::marker::PhantomData<E>,
-}
-
-#[cfg(feature = "cuda")]
-pub struct SingleMultiexpKernel<E>
-where
-    E: Engine,
-{
+    #[cfg(feature = "cuda")]
     program: cuda::Program,
 
     core_count: usize,
     n: usize,
 
     priority: bool,
-    _phantom: std::marker::PhantomData<E::Fr>,
+    _phantom: std::marker::PhantomData<E>,
 }
 
 fn calc_num_groups(core_count: usize, num_windows: usize) -> usize {
