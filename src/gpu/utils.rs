@@ -1,5 +1,8 @@
 use log::{info, warn};
-use rust_gpu_tools::*;
+#[cfg(feature = "cuda")]
+use rust_gpu_tools::cuda::Device;
+#[cfg(feature = "opencl")]
+use rust_gpu_tools::opencl::Device;
 use std::collections::HashMap;
 use std::env;
 
@@ -56,11 +59,6 @@ lazy_static::lazy_static! {
 }
 
 const DEFAULT_CORE_COUNT: usize = 2560;
-pub fn get_core_count(d: &opencl::Device) -> usize {
-    let name = d.name();
-    get_core_count_by_name(&name)
-}
-
 pub fn get_core_count_by_name(name: &str) -> usize {
     match CORE_COUNTS.get(&name[..]) {
         Some(&cores) => cores,
@@ -77,13 +75,15 @@ pub fn get_core_count_by_name(name: &str) -> usize {
     }
 }
 
+#[cfg(any(feature = "opencl", feature = "cuda"))]
 pub fn dump_device_list() {
-    for d in opencl::Device::all() {
+    for d in Device::all() {
         info!("Device: {:?}", d);
     }
 }
 
-#[cfg(feature = "gpu")]
+//#[cfg(feature = "gpu")]
+#[cfg(any(feature = "opencl", feature = "cuda"))]
 #[test]
 pub fn test_list_devices() {
     let _ = env_logger::try_init();

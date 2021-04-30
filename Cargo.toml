@@ -53,6 +53,9 @@ criterion = "0.3.2"
 default = ["pairing", "gpu"] # TODO: remove gpu default feature
 gpu = ["rust-gpu-tools", "ff-cl-gen", "fs2"]
 groth16 = []
+opencl = ["gpu", "rust-gpu-tools/opencl"]
+# TODO vmx 2021-04-30: Currently the FFT kernel still used opencl, even if cuda is used for multiexp
+cuda = ["gpu", "rust-gpu-tools/cuda", "rust-gpu-tools/opencl"]
 
 blst = ["blstrs", "groth16"]
 blst-serde = ["blstrs/serde"]
@@ -77,6 +80,6 @@ name = "lc"
 harness = false
 
 [patch.crates-io]
-#rust-gpu-tools = { path = "/home/vmx/src/pl/filecoin/rust-gpu-tools" }
-rust-gpu-tools = { git = "https://github.com/filecoin-project/rust-gpu-tools", branch = "cuda" }
+#rust-gpu-tools = { path = "../rust-gpu-tools" }
+rust-gpu-tools = { git = "https://github.com/filecoin-project/rust-gpu-tools", branch = "cuda-and-opencl" }
 

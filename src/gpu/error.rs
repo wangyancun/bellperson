@@ -1,11 +1,17 @@
-#[cfg(feature = "gpu")]
-use rust_gpu_tools::{cuda, opencl};
+//#[cfg(feature = "gpu")]
+// TODO vmx 2021-04-30: FFT is still using opencl even when CUDA is used for multiexp
+#[cfg(feature = "cuda")]
+use rust_gpu_tools::cuda;
+#[cfg(any(feature = "opencl", feature = "cuda"))]
+use rust_gpu_tools::opencl;
 
 #[derive(thiserror::Error, Debug)]
 pub enum GPUError {
     #[error("GPUError: {0}")]
     Simple(&'static str),
-    #[cfg(feature = "gpu")]
+    //#[cfg(feature = "gpu")]
+    // TODO vmx 2021-04-30: FFT is still using opencl even when CUDA is used for multiexp
+    #[cfg(any(feature = "opencl", feature = "cuda"))]
     #[error("OpenCL Error: {0}")]
     OpenCL(#[from] opencl::GPUError),
     #[cfg(feature = "gpu")]
@@ -16,6 +22,7 @@ pub enum GPUError {
     KernelUninitialized,
     #[error("GPU accelerator is disabled!")]
     GPUDisabled,
+    #[cfg(feature = "cuda")]
     #[error("Cuda Error: {0}")]
     Cuda(#[from] cuda::GPUError),
 }

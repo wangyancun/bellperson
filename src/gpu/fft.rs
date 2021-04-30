@@ -6,7 +6,9 @@ use crate::gpu::{
 };
 use ff::Field;
 use log::info;
-use rust_gpu_tools::*;
+// TODO vmx 2021-04-30: FFT currently always runs on opencl
+#[cfg(any(feature = "opencl", feature = "cuda"))]
+use rust_gpu_tools::opencl;
 use std::cmp;
 
 const LOG2_MAX_ELEMENTS: usize = 32; // At most 2^32 elements is supported.
@@ -82,7 +84,7 @@ where
         let kernel = self.program.create_kernel(
             "radix_fft",
             global_work_size as usize,
-            Some(local_work_size as usize),
+            local_work_size as usize,
         );
         kernel
             .arg(src_buffer)
