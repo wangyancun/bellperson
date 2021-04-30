@@ -29,7 +29,7 @@ pub use self::fft::*;
 #[cfg(feature = "gpu")]
 mod multiexp;
 
-#[cfg(feature = "gpu")]
+#[cfg(any(feature = "opencl", feature = "cuda"))]
 pub use self::multiexp::*;
 
 #[cfg(not(feature = "gpu"))]

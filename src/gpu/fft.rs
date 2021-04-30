@@ -44,7 +44,7 @@ where
 
         let src = sources::kernel::<E>(device.brand() == opencl::Brand::Nvidia);
 
-        let program = opencl::Program::from_opencl(device, &src)?;
+        let program = opencl::Program::from_opencl(&device, &src)?;
         let pq_buffer = program.create_buffer::<E::Fr>(1 << MAX_LOG2_RADIX >> 1)?;
         let omegas_buffer = program.create_buffer::<E::Fr>(LOG2_MAX_ELEMENTS)?;
 

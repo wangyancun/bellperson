@@ -10,9 +10,9 @@ use groupy::{CurveAffine, CurveProjective};
 use log::{error, info, warn};
 use rayon::prelude::*;
 #[cfg(feature = "cuda")]
-use rust_gpu_tools::cuda;
+use rust_gpu_tools::cuda as backend;
 #[cfg(feature = "opencl")]
-use rust_gpu_tools::opencl;
+use rust_gpu_tools::opencl as backend;
 use std::any::TypeId;
 use std::sync::Arc;
 
@@ -42,10 +42,7 @@ pub struct SingleMultiexpKernel<E>
 where
     E: Engine,
 {
-    #[cfg(feature = "opencl")]
-    program: opencl::Program,
-    #[cfg(feature = "cuda")]
-    program: cuda::Program,
+    program: backend::Program,
 
     core_count: usize,
     n: usize,
@@ -109,30 +106,18 @@ impl<E> SingleMultiexpKernel<E>
 where
     E: Engine,
 {
-    #[cfg(feature = "opencl")]
-    pub fn create(d: opencl::Device, priority: bool) -> GPUResult<SingleMultiexpKernel<E>> {
-        let src = sources::kernel::<E>(d.brand() == opencl::Brand::Nvidia);
-
-        let exp_bits = exp_size::<E>() * 8;
-        let core_count = utils::get_core_count_by_name(&d.name());
-        let mem = d.memory();
-        let max_n = calc_chunk_size::<E>(mem, core_count);
-        let best_n = calc_best_chunk_size(MAX_WINDOW_SIZE, core_count, exp_bits);
-        let n = std::cmp::min(max_n, best_n);
-
-        Ok(SingleMultiexpKernel {
-            program: opencl::Program::from_opencl(d, &src)?,
-            core_count,
-            n,
-            priority,
-            _phantom: std::marker::PhantomData,
-        })
-    }
-
-    #[cfg(feature = "cuda")]
-    pub fn create(device: cuda::Device, priority: bool) -> GPUResult<SingleMultiexpKernel<E>> {
-        // (cd src/gpu/multiexp; nvcc -O6 -fatbin -arch=sm_86 -gencode=arch=compute_86,code=sm_86 -gencode=arch=compute_80,code=sm_80 -gencode=arch=compute_75,code=sm_75 multiexp32.cu
-        let filename = CStr::from_bytes_with_nul(SOURCE_BIN).unwrap();
+    pub fn create(device: backend::Device, priority: bool) -> GPUResult<SingleMultiexpKernel<E>> {
+        #[cfg(feature = "opencl")]
+        let program = {
+            let src = sources::kernel::<E>(device.brand() == backend::Brand::Nvidia);
+            rust_gpu_tools::opencl::Program::from_opencl(&device, &src)?
+        };
+        #[cfg(feature = "cuda")]
+        let program = {
+            // (cd src/gpu/multiexp; nvcc -O6 -fatbin -arch=sm_86 -gencode=arch=compute_86,code=sm_86 -gencode=arch=compute_80,code=sm_80 -gencode=arch=compute_75,code=sm_75 multiexp32.cu
+            let filename = CStr::from_bytes_with_nul(SOURCE_BIN).unwrap();
+            rust_gpu_tools::cuda::Program::from_cuda(&device, &filename)?
+        };
 
         let exp_bits = exp_size::<E>() * 8;
         let name = device.name();
@@ -146,7 +131,7 @@ where
         let n = std::cmp::min(max_n, best_n);
 
         Ok(SingleMultiexpKernel {
-            program: cuda::Program::from_cuda(&device, &filename)?,
+            program,
             core_count,
             n,
             priority,
@@ -275,10 +260,7 @@ where
     pub fn create(priority: bool) -> GPUResult<MultiexpKernel<E>> {
         let lock = locks::GPULock::lock();
 
-        #[cfg(feature = "opencl")]
-        let devices = opencl::Device::all();
-        #[cfg(feature = "cuda")]
-        let devices = cuda::Device::all();
+        let devices = backend::Device::all();
 
         let kernels: Vec<_> = devices
             .into_iter()
