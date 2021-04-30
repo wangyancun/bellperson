@@ -211,8 +211,7 @@ where
                     .arg(&(window_size as u32))
                     .run()?;
 
-                let mut results =
-                    vec![<G as CurveAffine>::Projective::zero(); num_groups * num_windows];
+                let mut results = vec![<G as CurveAffine>::Projective::zero(); 2 * self.core_count];
                 self.program
                     .read_into_buffer(&result_buffer, 0, &mut results)?;
 
