@@ -80,10 +80,10 @@ where
 
         let n = 1u32 << log_n;
         let local_work_size = 1 << cmp::min(deg - 1, MAX_LOG2_LOCAL_WORK_SIZE);
-        let global_work_size = (n >> deg) * local_work_size;
+        let num_global_work = (n >> deg);
         let kernel = self.program.create_kernel(
             "radix_fft",
-            global_work_size as usize,
+            num_global_work as usize,
             local_work_size as usize,
         );
         kernel
